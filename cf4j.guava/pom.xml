@@ -1,27 +1,32 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <parent>
-  	<groupId>com.solace</groupId>
-  	<artifactId>cf4j</artifactId>
-  	<version>${cf4j.version}</version>
-  	<relativePath>../cf4j/pom.xml</relativePath>
-  </parent>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<groupId>com.solace</groupId>
+		<artifactId>cf4j</artifactId>
+		<version>${cf4j.version}</version>
+		<relativePath>../cf4j/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
 
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.solace</groupId>
-  <artifactId>cf4j.guava</artifactId>
-  <packaging>jar</packaging>
-  <version>${cf4j.version}</version>
+	<artifactId>cf4j.guava</artifactId>
 
-  
-  <name>cf4j.guava</name>
-  <url>http://maven.apache.org</url>
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+	<packaging>jar</packaging>
+
+	<name>cf4j.guava</name>
+
+	<url>http://maven.apache.org</url>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>17.0</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.solace</groupId>
+			<artifactId>cf4j.core</artifactId>
+			<version>${cf4j.version}</version>
+		</dependency>
+	</dependencies>
 </project>

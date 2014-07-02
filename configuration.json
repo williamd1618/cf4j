@@ -1,0 +1,14 @@
+{
+	"cache":[
+		{
+			"type":
+				{"property":
+					[
+						{"name":"name","value":"value"}
+					],
+					"value":"com.solace.cf4j.config.Configuration$MyCache"
+				},
+			"name":"test"
+		}
+	]
+}
