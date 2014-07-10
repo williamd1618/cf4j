@@ -18,13 +18,13 @@ public class ConfigurationLoader {
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
-	public Caches load() {
+	public Caches load(String fileName) {
 		InputStream in = this.getClass().getClassLoader()
-				.getResourceAsStream("SomeTextFile.txt");
+				.getResourceAsStream(fileName);
 
 		final char[] buffer = new char[1024];
 		final StringBuilder out = new StringBuilder();
-		
+
 		Caches c;
 		try {
 			final Reader r = new InputStreamReader(in, "UTF-8");
@@ -43,7 +43,12 @@ public class ConfigurationLoader {
 		} catch (Exception ex) {
 			throw new RuntimeException("Could not load config file", ex);
 		}
-		
+
 		return c;
+
+	}
+
+	public Caches load() {
+		return load(CONFIG_FILE);
 	}
 }

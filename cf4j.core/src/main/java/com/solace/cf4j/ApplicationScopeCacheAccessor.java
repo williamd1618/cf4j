@@ -62,8 +62,7 @@ public class ApplicationScopeCacheAccessor extends CacheAccessor {
 
 	@Override
 	public void shutdown() {
-		// TODO Auto-generated method stub
-		
+		this.m_cache.shutdown();
 	}
 
 	/* (non-Javadoc)

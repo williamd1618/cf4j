@@ -1,7 +1,7 @@
 package com.solace.cf4j.guava;
 
 import static com.solace.cf4j.guava.Keys.*;
-
+ 
 import java.io.Serializable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;

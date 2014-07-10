@@ -20,17 +20,6 @@ public abstract class CacheAccessor implements Cache {
 	protected static Map<String, Caches.CacheConfig> m_configs = new ConcurrentHashMap<String, Caches.CacheConfig>();
 
 	/**
-	 * The key that should be in {@link CACHE_CONFIG_FILE}
-	 */
-	public static final String CACHE_CONFIG_BEAN_KEY = "caches";
-
-	/**
-	 * The spring configuration file that we look to load
-	 * {@link CACHE_CONFIG_BEAN_KEY} from
-	 */
-	public static final String CACHE_CONFIG_FILE = "caches.xml";
-
-	/**
 	 * Static loading space for configuration options from the configuration
 	 * file
 	 */

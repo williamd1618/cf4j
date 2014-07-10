@@ -1,26 +1,21 @@
 package com.solace.cf4j.config;
 
-import static com.solace.cf4j.config.Caches.*;
-import static com.solace.cf4j.config.Caches.CacheConfig.*;
-import static com.solace.cf4j.config.Caches.CacheConfig.Type.*;
+import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import org.yaml.snakeyaml.Yaml;
+import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Iterables;
 import com.solace.cf4j.Cache;
 import com.solace.cf4j.CacheException;
 import com.solace.cf4j.Cacheable;
 
-import static com.google.common.base.Preconditions.*;
-
-public class Configuration {
+public class ConfigurationTests {
 	
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	
@@ -48,12 +43,12 @@ public class Configuration {
 			return null;
 		}
 
-		public Object get(Cacheable _key) throws CacheException {
+		public <T extends Serializable> T get(Cacheable _key) throws CacheException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
-		public Object get(String _key) throws CacheException {
+		public <T extends Serializable> T get(String _key) throws CacheException {
 			// TODO Auto-generated method stub
 			return null;
 		}
@@ -115,43 +110,30 @@ public class Configuration {
 			// TODO Auto-generated method stub
 			
 		}
+
+		public <T extends Serializable> T get(Cacheable _key,
+				Callable<T> ifNotFound) throws CacheException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public <T extends Serializable> T get(String _key,
+				Callable<T> ifNotFound) throws CacheException {
+			// TODO Auto-generated method stub
+			return null;
+		}
 		
 	}
 	
-	public static void main(String... args) {
+	
+	@Test
+	public void verify_json() {
 		
+		Caches c = (new ConfigurationLoader()).load("testConfigLoad.json");
 		
-		
-		Caches c = new Caches();
-		
-		CacheConfig config = new CacheConfig();
-		config.setName("test");
-		
-		Type t = new Type();
-		t.setValue(MyCache.class);
-		t.setProperties(Lists.<Property>newArrayList(new Property() {
-			{
-				setName("name");
-				setValue("value");
-			}
-		}));
-		
-		checkNotNull(t.getProperty());
-		
-		config.setType(t);
-		
-		c.getCache().add(config);
-		
-		try {
-			String json = MAPPER.writer().writeValueAsString(c);
-			
-			Caches newCaches = MAPPER.reader(Caches.class).readValue(json);
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		assertTrue(c.getCache().size() == 1);
+		assertTrue(Iterables.get(c.getCache(), 0, null).type.property.size() == 1);
+		assertTrue(Iterables.get(c.getCache(), 0, null).type.value.equals(MyCache.class));		
 	}
+	
 }
