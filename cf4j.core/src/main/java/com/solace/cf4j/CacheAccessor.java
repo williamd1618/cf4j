@@ -14,7 +14,7 @@ import com.solace.cf4j.config.ConfigurationLoader;
 import com.solace.cf4j.support.ReflectionUtil;
 
 public abstract class CacheAccessor implements Cache {
-	
+
 	private static Logger LOGGER = LoggerFactory.getLogger(CacheAccessor.class);
 
 	protected static Map<String, Caches.CacheConfig> m_configs = new ConcurrentHashMap<String, Caches.CacheConfig>();
@@ -40,13 +40,13 @@ public abstract class CacheAccessor implements Cache {
 			}
 		}
 	}
-	
-	public static Cache newApplicationScopeCache() {
-		return new ApplicationScopeCacheAccessor();
+
+	public static Cache newApplicationScopeCache(String name) {
+		return ApplicationScopeCacheAccessor.getInstance(name);
 	}
-	
-	public static Cache newThreadLocalScopeCache() {
-		return new ThreadLocalCacheAccessor();
+
+	public static Cache newThreadLocalScopeCache(String name) {
+		return ThreadLocalCacheAccessor.getInstance(name);
 	}
 
 	/**
@@ -58,10 +58,9 @@ public abstract class CacheAccessor implements Cache {
 	public static void addConfiguration(Caches.CacheConfig _config) {
 		synchronized (m_configs) {
 			if (m_configs.containsKey(_config.getName()))
-				LOGGER
-						.info(
-								"A previous CacheConfig exists with Name: [{}] ... replacing",
-								_config.getName());
+				LOGGER.info(
+						"A previous CacheConfig exists with Name: [{}] ... replacing",
+						_config.getName());
 			else
 				LOGGER.info("Adding a CacheConfig with Name: [{}]",
 						_config.getName());
@@ -108,8 +107,8 @@ public abstract class CacheAccessor implements Cache {
 				cache = ReflectionUtil.<Cache> createInstance(config.getType()
 						.getValue(), config);
 			} catch (Exception e) {
-				throw new ConfigurationException(String.format("Trouble loading {}",
-						config.getType().getValue()), e);
+				throw new ConfigurationException(String.format(
+						"Trouble loading {}", config.getType().getValue()), e);
 			}
 
 			cache.setRegionName(config.getName());
@@ -130,93 +129,76 @@ public abstract class CacheAccessor implements Cache {
 	public Cache getCache() {
 		return m_cache;
 	}
-	
+
 	public <T extends Serializable> T get(Cacheable _key) throws CacheException {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.get(_key);
 	}
 
 	public <T extends Serializable> T get(Cacheable _key, Callable<T> ifNotFound)
 			throws CacheException {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.get(_key, ifNotFound);
 	}
 
 	public <T extends Serializable> T get(String _key) throws CacheException {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.get(_key);
 	}
 
 	public <T extends Serializable> T get(String _key, Callable<T> ifNotFound)
 			throws CacheException {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.get(_key, ifNotFound);
 	}
 
 	public boolean set(Cacheable _obj) throws CacheException {
-		// TODO Auto-generated method stub
-		return false;
+		return m_cache.set(_obj);
 	}
 
 	public <T extends Serializable> boolean set(String _key, T _obj)
 			throws CacheException {
-		// TODO Auto-generated method stub
-		return false;
+		return m_cache.set(_key, _obj);
 	}
 
 	public Future<Boolean> setAsync(Cacheable _obj) throws CacheException {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.setAsync(_obj);
 	}
 
 	public <T extends Serializable> Future<Boolean> setAsync(String _key, T _obj)
 			throws CacheException {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.setAsync(_key, _obj);
 	}
 
 	public boolean delete(Cacheable _key) throws CacheException {
-		// TODO Auto-generated method stub
-		return false;
+		return m_cache.delete(_key);
 	}
 
 	public boolean delete(String _key) throws CacheException {
-		// TODO Auto-generated method stub
-		return false;
+		return m_cache.delete(_key);
 	}
 
 	public Future<Boolean> deleteAsync(Cacheable _key) throws CacheException {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.deleteAsync(_key);
 	}
 
 	public Future<Boolean> deleteAsync(String _key) throws CacheException {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.deleteAsync(_key);
 	}
 
 	public String getRegionName() throws CacheException {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.getRegionName();
 	}
 
 	public void setRegionName(String _name) throws CacheException {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public Map<String, String> getParameters() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_cache.getParameters();
 	}
 
 	public void clear() throws CacheException {
-		// TODO Auto-generated method stub
-		
+		m_cache.clear();
 	}
 
 	public void shutdown() throws CacheException {
-		// TODO Auto-generated method stub
-		
+		m_cache.shutdown();
 	}
 }

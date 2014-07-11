@@ -20,7 +20,7 @@ public class ApplicationScopeCacheAccessor extends CacheAccessor {
 
 	private static Map<String, Cache> m_caches = new HashMap<String, Cache>();
 
-	protected ApplicationScopeCacheAccessor() {
+	private ApplicationScopeCacheAccessor() {
 		super();
 	}
 

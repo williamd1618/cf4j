@@ -61,7 +61,7 @@ public class ThreadLocalCacheAccessor extends CacheAccessor {
 		return m_instance;
 	}
 
-	protected ThreadLocalCacheAccessor() {
+	private ThreadLocalCacheAccessor() {
 		super();
 	}
 
