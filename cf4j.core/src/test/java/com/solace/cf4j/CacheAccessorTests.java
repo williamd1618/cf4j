@@ -11,7 +11,6 @@ import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
 import com.google.common.collect.Lists;
@@ -128,7 +127,7 @@ public class CacheAccessorTests {
 			return true;
 		}
 
-		public <T extends Serializable> boolean set(String _key, T _obj)
+		public <T> boolean set(String _key, T _obj)
 				throws CacheException {
 			data.put(_key, (MyData)_obj);
 			
@@ -140,30 +139,30 @@ public class CacheAccessorTests {
 			return null;
 		}
 
-		public <T extends Serializable> Future<Boolean> setAsync(String _key,
+		public <T> Future<Boolean> setAsync(String _key,
 				T _obj) throws CacheException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
-		public <T extends Serializable> T get(Cacheable _key)
+		public <T> T get(Cacheable _key)
 				throws CacheException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
-		public <T extends Serializable> T get(Cacheable _key,
+		public <T> T get(Cacheable _key,
 				Callable<T> ifNotFound) throws CacheException {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
-		public <T extends Serializable> T get(String _key)
+		public <T> T get(String _key)
 				throws CacheException {
 			return (T)data.get(_key);
 		}
 
-		public <T extends Serializable> T get(String _key,
+		public <T> T get(String _key,
 				Callable<T> ifNotFound) throws CacheException {
 			// TODO Auto-generated method stub
 			return null;

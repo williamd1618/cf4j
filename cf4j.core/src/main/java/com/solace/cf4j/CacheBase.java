@@ -59,7 +59,7 @@ public abstract class CacheBase implements Cache {
 		return params;
 	}
 
-	protected <T extends Serializable> T invokeNotFound(
+	protected <T> T invokeNotFound(
 			final Callable<T> notFound) throws CacheException {
 
 		T result = null;

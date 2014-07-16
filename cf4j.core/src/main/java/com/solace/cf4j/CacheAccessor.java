@@ -130,20 +130,20 @@ public abstract class CacheAccessor implements Cache {
 		return m_cache;
 	}
 
-	public <T extends Serializable> T get(Cacheable _key) throws CacheException {
+	public <T> T get(Cacheable _key) throws CacheException {
 		return m_cache.get(_key);
 	}
 
-	public <T extends Serializable> T get(Cacheable _key, Callable<T> ifNotFound)
+	public <T> T get(Cacheable _key, Callable<T> ifNotFound)
 			throws CacheException {
 		return m_cache.get(_key, ifNotFound);
 	}
 
-	public <T extends Serializable> T get(String _key) throws CacheException {
+	public <T> T get(String _key) throws CacheException {
 		return m_cache.get(_key);
 	}
 
-	public <T extends Serializable> T get(String _key, Callable<T> ifNotFound)
+	public <T> T get(String _key, Callable<T> ifNotFound)
 			throws CacheException {
 		return m_cache.get(_key, ifNotFound);
 	}
@@ -152,7 +152,7 @@ public abstract class CacheAccessor implements Cache {
 		return m_cache.set(_obj);
 	}
 
-	public <T extends Serializable> boolean set(String _key, T _obj)
+	public <T> boolean set(String _key, T _obj)
 			throws CacheException {
 		return m_cache.set(_key, _obj);
 	}
@@ -161,7 +161,7 @@ public abstract class CacheAccessor implements Cache {
 		return m_cache.setAsync(_obj);
 	}
 
-	public <T extends Serializable> Future<Boolean> setAsync(String _key, T _obj)
+	public <T> Future<Boolean> setAsync(String _key, T _obj)
 			throws CacheException {
 		return m_cache.setAsync(_key, _obj);
 	}

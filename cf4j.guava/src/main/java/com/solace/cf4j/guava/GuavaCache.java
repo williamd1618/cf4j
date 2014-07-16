@@ -83,7 +83,7 @@ public class GuavaCache extends CacheBase implements Cache {
 	}
 
 	@Override
-	public <T extends Serializable> boolean set(String _key, T _obj)
+	public <T> boolean set(String _key, T _obj)
 			throws CacheException {
 
 		cache.put(_key, _obj);
@@ -104,7 +104,7 @@ public class GuavaCache extends CacheBase implements Cache {
 	}
 
 	@Override
-	public <T extends Serializable> Future<Boolean> setAsync(final String _key,
+	public <T> Future<Boolean> setAsync(final String _key,
 			final T _obj) throws CacheException {
 		Callable<Boolean> c = new Callable<Boolean>() {
 			public Boolean call() throws Exception {
@@ -116,12 +116,12 @@ public class GuavaCache extends CacheBase implements Cache {
 	}
 
 	@Override
-	public <T extends Serializable> T get(Cacheable _key) throws CacheException {
+	public <T> T get(Cacheable _key) throws CacheException {
 		return (T) cache.getIfPresent(_key.getCacheKey());
 	}
 
 	@Override
-	public <T extends Serializable> T get(Cacheable _key, Callable<T> ifNotFound)
+	public <T> T get(Cacheable _key, Callable<T> ifNotFound)
 			throws CacheException {
 		
 		T t = null;
@@ -139,12 +139,12 @@ public class GuavaCache extends CacheBase implements Cache {
 	}
 
 	@Override
-	public <T extends Serializable> T get(String _key) throws CacheException {
+	public <T> T get(String _key) throws CacheException {
 		return (T) cache.getIfPresent(_key);
 	}
 
 	@Override
-	public <T extends Serializable> T get(String _key, Callable<T> ifNotFound)
+	public <T> T get(String _key, Callable<T> ifNotFound)
 			throws CacheException {
 		T t = null;
 		if (ifNotFound != null)

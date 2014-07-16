@@ -27,9 +27,16 @@ import com.solace.cf4j.Cache;
 import com.solace.cf4j.CacheBase;
 import com.solace.cf4j.CacheException;
 import com.solace.cf4j.Cacheable;
+import com.solace.cf4j.ConfigurationException;
 import com.solace.cf4j.DistributedCache;
 import com.solace.cf4j.config.Caches;
 import com.solace.cf4j.config.Caches.CacheConfig;
+import com.solace.cf4j.serialization.Deserializer;
+import com.solace.cf4j.serialization.SerializationException;
+import com.solace.cf4j.serialization.Serializer;
+import com.solace.cf4j.support.ReflectionUtil;
+
+import static com.solace.cf4j.redis.Keys.*;
 
 /**
  * @see {@link RedisCache#SERVER_COUNT}
@@ -100,6 +107,9 @@ public class RedisCache extends CacheBase implements DistributedCache {
 			}
 		}
 	};
+	
+	private Serializer serializer;
+	private Deserializer deserializer;
 
 	private int m_minPoolSize = 5;
 	private int m_maxPoolSize = 10;
@@ -210,6 +220,24 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		List<JedisShardInfo> shards = new ArrayList<JedisShardInfo>();
 
 		String tmp = null;
+		
+		if ((tmp = getParameters().get(SERIALIZER)) != null)
+			try {
+				serializer = ReflectionUtil.createInstance(tmp);
+			} catch (Exception e) {
+				throw new ConfigurationException(e);
+			}
+		else
+			throw new ConfigurationException("serializer must be provided.");
+		
+		if ((tmp = getParameters().get(DESERIALIZER)) != null)
+			try {
+				deserializer = ReflectionUtil.createInstance(tmp);
+			} catch (Exception e) {
+				throw new ConfigurationException(e);
+			}
+		else
+			throw new ConfigurationException("serializer must be provided.");
 
 		int serverCount = 0;
 
@@ -371,11 +399,11 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	 * @see com.solace.RedisCache.Cache#set(java.lang.String, java.lang.Object)
 	 */
 	@Override
-	public <T extends Serializable> boolean set(String _key, T _item)
+	public <T> boolean set(String _key, T _item)
 			throws CacheException {
 		boolean set = false;
 		try {
-			String val = MAPPER.writer().writeValueAsString(_item);
+			String val = ser(_item);
 
 			if (!m_hasTimespan) {
 				LOGGER.debug(STORING_S_S, _key, val);
@@ -409,7 +437,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	 * @see RedisCache#get(String)
 	 */
 	@Override
-	public <T extends Serializable> T get(Cacheable _item)
+	public <T> T get(Cacheable _item)
 			throws CacheException {
 		return get(_item.getCacheKey());
 	}
@@ -425,7 +453,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	 * 
 	 */
 	@Override
-	public <T extends Serializable> T get(String _key) throws CacheException {
+	public <T> T get(String _key) throws CacheException {
 		LOGGER.debug(GETTING_S, _key);
 
 		String result = null;
@@ -438,7 +466,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 
 		LOGGER.debug(KEY_S_S, _key, (result != null) ? FOUND : NOT_FOUND);
 
-		return (T) result;
+		return deser(result);
 	}
 
 	/**
@@ -569,7 +597,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	}
 
 	@Override
-	public <T extends Serializable> Future<Boolean> setAsync(final String _key,
+	public <T> Future<Boolean> setAsync(final String _key,
 			final T _obj) throws CacheException {
 		Callable<Boolean> c = new Callable<Boolean>() {
 
@@ -582,7 +610,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	}
 
 	@Override
-	public <T extends Serializable> T get(Cacheable _key, Callable<T> ifNotFound)
+	public <T> T get(Cacheable _key, Callable<T> ifNotFound)
 			throws CacheException {
 		T t = get(_key);
 
@@ -595,7 +623,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	}
 
 	@Override
-	public <T extends Serializable> T get(String _key, Callable<T> ifNotFound)
+	public <T> T get(String _key, Callable<T> ifNotFound)
 			throws CacheException {
 
 		T t = get(_key);
@@ -631,5 +659,14 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		};
 
 		return asyncExecutor.submit(c);
+	}
+	
+	
+	private <T> String ser(T _in) {
+		return serializer.serialize(_in);
+	}
+	
+	private <T> T deser(String _in) {
+		return (T)deserializer.deserialize(_in);
 	}
 }
