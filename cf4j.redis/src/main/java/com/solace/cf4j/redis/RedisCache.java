@@ -669,4 +669,14 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	private <T> T deser(String _in) {
 		return (T)deserializer.deserialize(_in);
 	}
+	
+	
+	/**
+	 * Because redis is out of memory threadlocal access has no value
+	 * @return
+	 */
+	@Override
+	public boolean supportsThreadLocal() {
+		return false;
+	}
 }

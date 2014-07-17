@@ -39,4 +39,6 @@ public interface Cache {
 	public void clear() throws CacheException;
 	
 	public void shutdown() throws CacheException;
+	
+	public boolean supportsThreadLocal();
 }

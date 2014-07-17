@@ -46,7 +46,12 @@ public abstract class CacheAccessor implements Cache {
 	}
 
 	public static Cache newThreadLocalScopeCache(String name) {
-		return ThreadLocalCacheAccessor.getInstance(name);
+		Cache c = ThreadLocalCacheAccessor.getInstance(name);
+		
+		if (!c.supportsThreadLocal())
+			throw new CacheException(name + " cannot be accessed with a thread local accessor.");
+		else 
+			return c;
 	}
 
 	/**
@@ -200,5 +205,9 @@ public abstract class CacheAccessor implements Cache {
 
 	public void shutdown() throws CacheException {
 		m_cache.shutdown();
+	}
+	
+	public boolean supportsThreadLocal() {
+		return m_cache.supportsThreadLocal();
 	}
 }

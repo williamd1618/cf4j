@@ -58,6 +58,11 @@ public abstract class CacheBase implements Cache {
 
 		return params;
 	}
+	
+	
+	public boolean supportsThreadLocal() {
+		return true;
+	}
 
 	protected <T> T invokeNotFound(
 			final Callable<T> notFound) throws CacheException {
