@@ -1,13 +1,12 @@
 {
 	"cache":[
 		{
-			"type":
-				{"property":
-					[
-						{"name":"name","value":"value"}
-					],
-					"value":"com.solace.cf4j.config.ConfigurationTests$MyCache"
+			"type": {
+				"properties": {
+						"name":"value"
 				},
+				"value":"com.solace.cf4j.config.ConfigurationTests$MyCache"
+			},
 			"name":"test"
 		}
 	]

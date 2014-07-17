@@ -50,9 +50,9 @@ public abstract class CacheBase implements Cache {
 		// only iterate if the properties collection has elements
 		if (m_config != null && m_config.getType().getProperty() != null
 				&& m_config.getType().getProperty().size() > 0) {
-			for (Caches.CacheConfig.Type.Property prop : m_config.getType()
-					.getProperty()) {
-				m_params.put(prop.getName(), prop.getValue());
+			for (Map.Entry<String, String> e : m_config.getType()
+					.getProperty().entrySet()) {
+				m_params.put(e.getKey(), e.getValue());
 			}
 		}
 

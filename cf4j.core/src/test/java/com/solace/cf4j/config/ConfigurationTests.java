@@ -132,7 +132,7 @@ public class ConfigurationTests {
 		Caches c = (new ConfigurationLoader()).load("testConfigLoad.json");
 		
 		assertTrue(c.getCache().size() == 1);
-		assertTrue(Iterables.get(c.getCache(), 0, null).type.property.size() == 1);
+		assertTrue(Iterables.get(c.getCache(), 0, null).type.properties.size() == 1);
 		assertTrue(Iterables.get(c.getCache(), 0, null).type.value.equals(MyCache.class));		
 	}
 	

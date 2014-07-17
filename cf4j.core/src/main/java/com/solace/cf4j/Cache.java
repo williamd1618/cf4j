@@ -1,6 +1,5 @@
 package com.solace.cf4j;
 
-import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;

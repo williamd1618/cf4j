@@ -11,13 +11,12 @@ Currently done in json, there will be support yaml support in the near future.
 {
 	"cache":[
 		{
-			"type":
-				{"property":
-					[
-						{"name":"name","value":"value"}
-					],
-					"value":"com.solace.cf4j.guava.GuavaCache"
+			"type": {
+				"properties": {
+					"key":"value"
 				},
+				"value":"com.solace.cf4j.guava.GuavaCache"
+			},
 			"name":"test"
 		}
 	]
