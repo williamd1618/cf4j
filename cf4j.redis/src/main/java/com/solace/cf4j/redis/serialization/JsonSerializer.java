@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solace.cf4j.serialization.*;
 
 
-public abstract class JsonSerializer<T> implements Serializer<T>, Deserializer<T> {
+public abstract class JsonSerializer<T> implements SerializationStrategy<T> {
 	
 	Class<T> clazz;
 	

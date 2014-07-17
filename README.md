@@ -65,7 +65,13 @@ _properties_
 
 | property  | description  | type |
 | :------------ |:---------------| :-----|
-
+| serializationStrategy | serialization strategy to use | string |
+| serverCount | number of servers in cluster (defines key'ing) | string |
+| server[n].host | host of nth server | string |
+| server[n].port | port of nth server | int (defaults to 6379) |
+| server[n].weight | weight of nth server | int |	
+| connectionTimeout | timeout | long |	
+| cacheTimespan | timespan to set by default in secs | int (defaults to forever) |	
 
 
 __AOP__

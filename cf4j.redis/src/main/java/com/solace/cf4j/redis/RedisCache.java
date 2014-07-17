@@ -31,29 +31,18 @@ import com.solace.cf4j.ConfigurationException;
 import com.solace.cf4j.DistributedCache;
 import com.solace.cf4j.config.Caches;
 import com.solace.cf4j.config.Caches.CacheConfig;
-import com.solace.cf4j.serialization.Deserializer;
 import com.solace.cf4j.serialization.SerializationException;
-import com.solace.cf4j.serialization.Serializer;
+import com.solace.cf4j.serialization.SerializationStrategy;
 import com.solace.cf4j.support.ReflectionUtil;
 
 import static com.solace.cf4j.redis.Keys.*;
 
 /**
- * @see {@link RedisCache#SERVER_COUNT}
- * @see {@link RedisCache#SERVER_HOST}
- * @see {@link RedisCache#SERVER_PORT}
- * @see {@link RedisCache#SERVER_WEIGHT}
- * @see {@link RedisCache#DEFAULT_SERVER_WEIGHT}
- * @see {@link RedisCache#SOCKET_POOL_MINSIZE}
- * @see {@link RedisCache#SOCKET_POOL_MAXSIZE}
- * @see {@link RedisCache#CONNECTION_TIMEOUT}
- * @see {@link RedisCache#CACHE_TIMESPAN}
- * @see {@link RedisCache#SOCKET_POOL_INIT_CONNS}
- * @see {@link RedisCache#SOCKET_POOL_MAINT_THREAD_SLEEP}
- * @see {@link RedisCache#SOCKET_POOL_SOCKET_CONNECT_TO}
- * @see {@link RedisCache#SOCKET_POOL_SOCKET_TO}
- * @see {@link RedisCache#COMPRESS}
- * @see {@link RedisCache#COMPRESSION_THRESHOLD}
+ * @see {@link Keys#SERVER_COUNT}
+ * @see {@link Keys#SERVER_HOST}
+ * @see {@link Keys#SERVER_WEIGHT}
+ * @see {@link Keys#CONNECTION_TIMEOUT}
+ * @see {@link Keys#CACHE_TIMESPAN}
  * 
  * 
  * @author dwilliams
@@ -88,12 +77,10 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	private static final String STORING_S_S = "Storing {} = {}.";
 
 	private static final String S_MUST_BE_AN_INTEGER_1 = "{} must be an integer > 1";
+	
+	public static final Integer DEFAULT_SERVER_WEIGHT = new Integer(5);
 
 	static final Logger LOGGER = LoggerFactory.getLogger(RedisCache.class);
-
-	static final ExecutorService executor = Executors.newCachedThreadPool();
-
-	static final ObjectMapper MAPPER = new ObjectMapper();
 
 	// avoid recurring construction
 	private static ThreadLocal<MessageDigest> MD5 = new ThreadLocal<MessageDigest>() {
@@ -108,102 +95,11 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		}
 	};
 	
-	private Serializer serializer;
-	private Deserializer deserializer;
+	private SerializationStrategy serializer;	
 
-	private int m_minPoolSize = 5;
-	private int m_maxPoolSize = 10;
 	private int m_timeout = 3;
 	private boolean m_hasTimespan = false;
 	private int m_timespan = 0;
-
-	/**
-	 * how many servers in config
-	 */
-	public static final String SERVER_COUNT = "serer.count";
-
-	/**
-	 * host of server
-	 */
-	public static final String SERVER_HOST = "server[%d].host";
-
-	/**
-	 * port of server
-	 */
-	public static final String SERVER_PORT = "server[%d].port";
-
-	/**
-	 * weight in relation to other servers, default is 5
-	 */
-	public static final String SERVER_WEIGHT = "server[%d].weight";
-
-	/**
-	 * default weight
-	 */
-	public static final Integer DEFAULT_SERVER_WEIGHT = new Integer(5);
-
-	/**
-	 * min size of socket pool
-	 */
-	public static final String SOCKET_POOL_MINSIZE = "socketPool.minSize";
-
-	/**
-	 * max size of socket pool
-	 */
-	public static final String SOCKET_POOL_MAXSIZE = "socketPool.maxSize";
-
-	/**
-	 * the number of initial connections to factory
-	 */
-	public static final String SOCKET_POOL_INIT_CONNS = "socketPool.initialConnections";
-
-	/**
-	 * in seconds (defaults to 3s)
-	 */
-	public static final String SOCKET_POOL_SOCKET_CONNECT_TO = "socketPool.socketConnectTimeout";
-
-	/**
-	 * In milliseconds the amount of time for the client to block on reads
-	 * (defaults to 3s)
-	 */
-	public static final String SOCKET_POOL_SOCKET_TO = "socketPool.socketTimeout";
-
-	/**
-	 * connection timeout in minutes
-	 */
-	public static final String CONNECTION_TIMEOUT = "connectionTimeout";
-
-	/**
-	 * how long should the entity exist in seconds.
-	 */
-	public static final String CACHE_TIMESPAN = "cacheTimespan";
-
-	/**
-	 * In bytes at what point the cache client should start compression the data
-	 * streams (defaults to 4kb).
-	 */
-	public static final String COMPRESSION_THRESHOLD = "compressionThreshold";
-
-	/**
-	 * true or false to enable compressions (default is true)
-	 */
-	public static final String COMPRESS = "compress";
-
-	/**
-	 * The maintenace thread in ms. By default it is 5 seconds
-	 */
-	public static final String SOCKET_POOL_MAINT_THREAD_SLEEP = "socketPool.maintenanceThreadSleep";
-
-	int initialConnections = 10;
-	long maxIdleTime = 1000 * 60 * 30; // 30 minutes
-	long maxBusyTime = 1000 * 60 * 5; // 5 minutes
-	long maintThreadSleep = 1000 * 5; // 5 seconds
-	int socketTimeOut = 1000 * 3; // 3 seconds to block on reads
-	int socketConnectTO = 1000 * 3; // 3 seconds to block on initial
-	boolean nagleAlg = false; // turn off Nagle's algorithm on all
-	boolean aliveCheck = false; // disable health check of socket on
-	int compressionThreshold = 1024 * 4;
-	boolean compress = true;
 
 	ShardedJedis jedis = null;
 
@@ -221,24 +117,15 @@ public class RedisCache extends CacheBase implements DistributedCache {
 
 		String tmp = null;
 		
-		if ((tmp = getParameters().get(SERIALIZER)) != null)
+		if ((tmp = getParameters().get(SERIALIZATION_STRATEGY)) != null)
 			try {
 				serializer = ReflectionUtil.createInstance(tmp);
 			} catch (Exception e) {
 				throw new ConfigurationException(e);
 			}
 		else
-			throw new ConfigurationException("serializer must be provided.");
+			throw new ConfigurationException("serializationStrategy must be provided.");
 		
-		if ((tmp = getParameters().get(DESERIALIZER)) != null)
-			try {
-				deserializer = ReflectionUtil.createInstance(tmp);
-			} catch (Exception e) {
-				throw new ConfigurationException(e);
-			}
-		else
-			throw new ConfigurationException("serializer must be provided.");
-
 		int serverCount = 0;
 
 		if ((tmp = getParameters().get(SERVER_COUNT)) != null)
@@ -267,11 +154,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		StringBuffer sb = new StringBuffer();
 		for (String str : servers)
 			sb.append(str).append(";");
-
-		LOGGER.info(String
-				.format("Initializing a Redis client with servers: {}\n, min socket pool: {}\n, max socket pool: {}\n, timeout: {} mins\n, cache timespan: {} mins.",
-						sb.toString(), m_minPoolSize, m_maxPoolSize, m_timeout,
-						this.m_timespan));
 
 		for (String s : servers)
 			shards.add(new JedisShardInfo(s));
@@ -667,7 +549,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	}
 	
 	private <T> T deser(String _in) {
-		return (T)deserializer.deserialize(_in);
+		return (T)serializer.deserialize(_in);
 	}
 	
 	

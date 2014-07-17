@@ -48,10 +48,10 @@ public abstract class CacheBase implements Cache {
 		Map<String, String> params = new HashMap<String, String>();
 
 		// only iterate if the properties collection has elements
-		if (m_config != null && m_config.getType().getProperty() != null
-				&& m_config.getType().getProperty().size() > 0) {
+		if (m_config != null && m_config.getType().getProperties() != null
+				&& m_config.getType().getProperties().size() > 0) {
 			for (Map.Entry<String, String> e : m_config.getType()
-					.getProperty().entrySet()) {
+					.getProperties().entrySet()) {
 				m_params.put(e.getKey(), e.getValue());
 			}
 		}
