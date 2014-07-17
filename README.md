@@ -1,8 +1,45 @@
-_cf4j_ is a simple caching facade written in Java 7 to allow for it to be 
-as consumable as possible.  The intention of the codebase is to allow a configurable and injectable caching implementation and be directly accessed via _Managers_.  I _Manager_ is simply a decorated _Cache_ implementation that provides access via a synchronized application scope or thread-local scope (useful for webservices and passing context other than on the stack).
+__cf4j__
 
-In addition, cf4j provides a advise that can be applied via AspectJ to your JVM
-project.  This includes all variations of JVM architectected languages including Scala and Clojure.  The advice application allow for an expression language written in JEXL to define what the key'ing structure is for the cache entry instead of having to be programmatically defined.
+_cf4j_ is an a caching facade written in Java for the JVM.
+Codebase is currently authored in Java 7, exposes its own runtime exceptions,
+as well as a tightly defined interfaced for a _Cache_. 
 
-The _Cache_ implementations support asynchronous and synchronous access.  
-Asynchronous access is handled via Java Futures.  Perhaps a future implementation will support RxJava whose Futures are more compatibile with Scala Futures.
+__Configuration__
+Currently done in json, there will be support yaml support in the near future.
+
+```
+{
+	"cache":[
+		{
+			"type":
+				{"property":
+					[
+						{"name":"name","value":"value"}
+					],
+					"value":"com.solace.cf4j.guava.GuavaCache"
+				},
+			"name":"test"
+		}
+	]
+}
+```
+
+Caches are registered into the system by name and are subsequently accessed by 
+name via a decorated interface, _CacheAccessor_, that will allow for application or thread
+local scope access, thread local only if the cache supports it.  Currently implementations
+are in-proc guava, out-of-proc caches (i.e. Redis) will not support construction via 
+thread local.
+
+Caches can be factoried programmatically in the following manner:
+
+```
+Cache c = CacheAccessor.newApplicationScopeCache("test");
+
+c.set("foo", 1);
+```
+
+In addition, the https://github.com/williamd1618/cf4j/blob/master/cf4j.core/src/main/java/com/solace/cf4j/Cache.java 
+interface supports the ability to provide cache loading when keys are not resolved as well 
+as asynchronous operations for _set_ and _delete_
+
+__AOP__
