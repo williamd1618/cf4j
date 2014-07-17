@@ -41,4 +41,31 @@ In addition, the https://github.com/williamd1618/cf4j/blob/master/cf4j.core/src/
 interface supports the ability to provide cache loading when keys are not resolved as well 
 as asynchronous operations for _set_ and _delete_
 
+__CURRENT IMPLEMENTATIONS__
+
+_Guava_
+
+artifact: cf4j.guava
+
+_properties_
+
+| property  | description  | type |
+| :------------ | :---------------| :-----|
+| maximumSize | max number of cached elements | long |
+| expireAfterWrite | expiration time |   long |
+| expireAfterWriteInterval | expiration interval | http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/TimeUnit.html |
+| removalListener | class to invoke when elements removed | string |
+
+
+_Redis_
+
+artifact: cf4j.redis
+
+_properties_
+
+| property  | description  | type |
+| :------------ |:---------------| :-----|
+
+
+
 __AOP__
