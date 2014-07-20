@@ -1,9 +1,16 @@
 package com.solace.cf4j.annotations;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.concurrent.TimeUnit;
 
 import com.solace.cf4j.CacheOperation;
 
+@Inherited
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Cached {
 	
 	/**

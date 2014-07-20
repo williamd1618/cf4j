@@ -29,14 +29,7 @@ public class CachingAdvice {
 		// TODO Auto-generated constructor stub
 	}
 
-	/**
-	 * pointcut for specific methods annoated with {@link Timed}
-	 */
-	@Pointcut("execution(@com.solace.cf4j.annotations.Cached * *(..))")
-	public void cacheEnabled() {
-	}
-
-	@Around(value = "cacheEnabled()", argNames = "pjp,cached")
+	@Around(value = "call(* *(..)) && @annotation(cached)", argNames = "pjp,cached")
 	public Object invoke(final ProceedingJoinPoint pjp, final Cached cached)
 			throws Throwable {
 
