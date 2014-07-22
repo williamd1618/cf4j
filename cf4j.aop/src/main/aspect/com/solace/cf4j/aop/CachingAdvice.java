@@ -15,6 +15,15 @@ import com.google.common.base.Strings;
 import com.solace.cf4j.annotations.Cached;
 import com.solace.cf4j.*;
 
+/**
+ * The CachingAdvice is weaved into code based upon the pointcut defined.
+ * <p>
+ * If using an expression language, {@link Cached#el()}=true, then the object reference must
+ * be of the form $1...$n representing the parameter passed in on the stack
+ * 
+ * @author <a href="mailto:daniel.williams@gmail.com">Daniel Williams</a>
+ *
+ */
 @Aspect
 public class CachingAdvice {
 
