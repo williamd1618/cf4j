@@ -133,7 +133,8 @@ public class CachingAdvice {
 
 		// populate the context
 		JexlContext context = new MapContext();
-		context.set("o", cached.cacheStackLocation()-1);
+		for(int i=1; i<=pjp.getArgs().length; i++)
+			context.set("$" + i, pjp.getArgs()[i]);
 		
 		return e.evaluate(context).toString();
 	}
