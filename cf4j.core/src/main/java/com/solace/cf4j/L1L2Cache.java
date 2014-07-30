@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.solace.cf4j.config.Caches.CacheConfig;
@@ -19,7 +20,7 @@ public class L1L2Cache extends CacheBase {
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(L1L2Cache.class);
 
-	private List<Cache> m_caches = new ArrayList<Cache>();
+	protected List<Cache> m_caches = new ArrayList<Cache>();
 
 	public L1L2Cache(CacheConfig _config) {
 		super(_config);
@@ -27,6 +28,9 @@ public class L1L2Cache extends CacheBase {
 		try {
 			int cacheCount = 0;
 			String tmp;
+
+			if (getParameters().containsKey("test"))
+				return;
 
 			if ((tmp = getParameters().get("cache.count")) != null)
 				cacheCount = Integer.parseInt(tmp);
@@ -67,18 +71,18 @@ public class L1L2Cache extends CacheBase {
 
 		return (result.isPresent()) ? result.get() : false;
 	}
-	
+
 	private Future<Boolean> factoryFromList(final List<Future<Boolean>> b) {
 		Callable<Boolean> c = new Callable<Boolean>() {
 			public Boolean call() throws Exception {
 				List<Boolean> vals = new ArrayList<Boolean>();
-				for(Future<Boolean> v : b) 
+				for (Future<Boolean> v : b)
 					vals.add(v.get());
-				
+
 				return eval(vals);
 			}
 		};
-		
+
 		return asyncExecutor.submit(c);
 	}
 
@@ -104,20 +108,20 @@ public class L1L2Cache extends CacheBase {
 
 	public Future<Boolean> setAsync(Cacheable _obj) throws CacheException {
 		List<Future<Boolean>> b = new ArrayList<Future<Boolean>>();
-		for(Cache c : m_caches) 
+		for (Cache c : m_caches)
 			b.add(c.setAsync(_obj));
-		
+
 		return factoryFromList(b);
 	}
 
 	public <T> Future<Boolean> setAsync(String _key, T _obj)
 			throws CacheException {
-		
+
 		List<Future<Boolean>> b = new ArrayList<Future<Boolean>>();
-		for(Cache c : m_caches) {
+		for (Cache c : m_caches) {
 			b.add(c.setAsync(_key, _obj));
 		}
-		
+
 		return factoryFromList(b);
 	}
 
@@ -156,11 +160,29 @@ public class L1L2Cache extends CacheBase {
 	public <T> T get(String _key) throws CacheException {
 		T t = null;
 
+		Cache tmp = null;
+
 		for (Cache c : m_caches) {
 			t = c.get(_key);
 
-			if (t != null)
+			if (t != null) {
+				tmp = c;
 				break;
+			}
+		}
+
+		if (tmp != null) {
+			final Cache hit = tmp;
+
+			Iterable<Cache> filtered = Iterables.filter(m_caches, new Predicate<Cache>() {
+
+				public boolean apply(Cache input) {
+					return !input.equals(hit);
+				}
+			});
+			
+			for(Cache c : filtered)
+				c.setAsync(_key, t);
 		}
 
 		return t;
