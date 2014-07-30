@@ -1,9 +1,7 @@
 package com.solace.cf4j.guava;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -13,11 +11,6 @@ import org.junit.*;
 import com.google.common.collect.Lists;
 import com.solace.cf4j.Cache;
 import com.solace.cf4j.CacheAccessor;
-import com.solace.cf4j.CacheAccessorTests;
-import com.solace.cf4j.CacheException;
-import com.solace.cf4j.Cacheable;
-import com.solace.cf4j.CacheAccessorTests.MyCache;
-import com.solace.cf4j.CacheAccessorTests.MyData;
 import com.solace.cf4j.config.Caches;
 import com.solace.cf4j.config.Caches.CacheConfig;
 import com.solace.cf4j.config.Caches.CacheConfig.Type;

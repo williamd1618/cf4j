@@ -122,6 +122,11 @@ public class ConfigurationTests {
 			// TODO Auto-generated method stub
 			return null;
 		}
+
+		public boolean supportsThreadLocal() {
+			// TODO Auto-generated method stub
+			return false;
+		}
 		
 	}
 	

@@ -1,37 +1,26 @@
 package com.solace.cf4j.redis;
 
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.JedisShardInfo;
+import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
-import redis.clients.jedis.ShardedJedis;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solace.cf4j.ArgumentException;
-import com.solace.cf4j.Cache;
 import com.solace.cf4j.CacheBase;
 import com.solace.cf4j.CacheException;
 import com.solace.cf4j.Cacheable;
 import com.solace.cf4j.ConfigurationException;
 import com.solace.cf4j.DistributedCache;
 import com.solace.cf4j.config.Caches;
-import com.solace.cf4j.config.Caches.CacheConfig;
-import com.solace.cf4j.serialization.SerializationException;
 import com.solace.cf4j.serialization.SerializationStrategy;
 import com.solace.cf4j.support.ReflectionUtil;
 
@@ -64,13 +53,13 @@ public class RedisCache extends CacheBase implements DistributedCache {
 
 	private static final String COULD_NOT_DELETE = "Could not delete";
 
-	private static final String S_WAS_NOT_SUCCESSFULLY_DELETED = "[%s] was NOT successfully deleted.";
+	private static final String S_WAS_NOT_SUCCESSFULLY_DELETED = "{} was NOT successfully deleted.";
 
-	private static final String S_WAS_SUCCESSFULLY_DELETED = "[%d] was successfully deleted.";
+	private static final String S_WAS_SUCCESSFULLY_DELETED = "{} was successfully deleted.";
 
-	private static final String S_WAS_NOT_SUCCESSFULLY_SET = "[%d] was NOT successfully set.";
+	private static final String S_WAS_NOT_SUCCESSFULLY_SET = "{} was NOT successfully set.";
 
-	private static final String S_WAS_SUCCESSFULLY_SET = "[%d] was successfully set.";
+	private static final String S_WAS_SUCCESSFULLY_SET = "{} was successfully set.";
 
 	private static final String STORING_S_S_WITH_EXPIRY_S = "Storing {} = {} with expiry {}.";
 
@@ -101,7 +90,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	private boolean m_hasTimespan = false;
 	private int m_timespan = 0;
 
-	ShardedJedis jedis = null;
+	protected Jedis jedis = null;
 
 	/**
 	 * Constructor fired by CacheConfig.loadImplementation
@@ -112,8 +101,9 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	public RedisCache(Caches.CacheConfig _config) throws ArgumentException,
 			CacheException {
 		super(_config);
-
-		List<JedisShardInfo> shards = new ArrayList<JedisShardInfo>();
+		
+		if (m_config == null)
+			return;
 
 		String tmp = null;
 		
@@ -121,26 +111,25 @@ public class RedisCache extends CacheBase implements DistributedCache {
 			try {
 				serializer = ReflectionUtil.createInstance(tmp);
 			} catch (Exception e) {
-				throw new ConfigurationException(e);
+				throw new ConfigurationException(e.getMessage(), e);
 			}
 		else
 			throw new ConfigurationException("serializationStrategy must be provided.");
 		
+		if (getParameters().containsKey("test"))
+			return;
+		
 		int serverCount = 0;
-
-		if ((tmp = getParameters().get(SERVER_COUNT)) != null)
+		
+		if ((tmp = getParameters().get(SERVER_COUNT)) != null) {
 			serverCount = Integer.parseInt(tmp);
-		else
-			throw new ArgumentException(
-					"Server inforemation must be defined for DistributedCache");
-
-		String[] servers = new String[serverCount];
-		int[] weights = new int[serverCount];
-
-		for (int i = 0; i < serverCount; i++) {
-			servers[i] = loadServer(i);
-			weights[i] = loadWeight(i);
-		}
+			if ( serverCount != 1)
+				throw new ConfigurationException("currently redis implementation only supports a single server.");
+		} else
+			throw new ConfigurationException(
+					"Server information must be defined for RedisCache.");
+		
+		HostAndPort hostAndPort = loadServer(0);
 
 		if ((tmp = getParameters().get(CONNECTION_TIMEOUT)) != null
 				&& tmp.trim() != "") {
@@ -151,14 +140,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 						S_MUST_BE_AN_INTEGER_1, CONNECTION_TIMEOUT));
 		}
 
-		StringBuffer sb = new StringBuffer();
-		for (String str : servers)
-			sb.append(str).append(";");
-
-		for (String s : servers)
-			shards.add(new JedisShardInfo(s));
-
-		jedis = new ShardedJedis(shards);
+		jedis = new Jedis(hostAndPort.getHost(), hostAndPort.getPort());
 
 		if ((tmp = getParameters().get(CACHE_TIMESPAN)) != null
 				&& tmp.trim() != "") {
@@ -185,13 +167,8 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		}
 	}
 
-	@Override
 	public void shutdown() throws CacheException {
-		try {
-			jedis.disconnect();
-		} catch (Exception e) {
-			throw new CacheException(e.getMessage(), e);
-		}
+
 	}
 
 	/**
@@ -202,19 +179,16 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	 * @throws ArgumentException
 	 *             thrown if an argument is impropertly formed or does not exist
 	 */
-	private String loadServer(int i) throws ArgumentException {
+	private HostAndPort loadServer(int i) throws ArgumentException {
+		String host = null;
+		int port;
+		
 		String tmp = null;
 
-		StringBuffer sb = new StringBuffer("redis://");
-
-		int port;
-
-		if ((tmp = getParameters().get(String.format(SERVER_HOST, i))) == null
+		if ((host = getParameters().get(String.format(SERVER_HOST, i))) == null
 				|| tmp == "")
 			throw new ArgumentException(String.format(SERVER_HOST
-					+ "property is required for RedisCache", i));
-
-		sb.append(tmp);
+					+ "property is required for RedisCache", i));		
 
 		if ((tmp = getParameters().get(String.format(SERVER_PORT, i))) == null
 				|| tmp == "") {
@@ -223,9 +197,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 			port = Integer.parseInt(tmp);
 		}
 
-		sb.append(":").append(port);
-
-		return sb.toString();
+		return new HostAndPort(host, port);
 	}
 
 	private int loadWeight(int i) {
@@ -261,7 +233,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	/**
 	 * @see RedisCache#set(String, Object)
 	 */
-	@Override
 	public boolean set(Cacheable _item) throws CacheException {
 		return set(_item.getCacheKey(), _item);
 	}
@@ -280,7 +251,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	 * 
 	 * @see com.solace.RedisCache.Cache#set(java.lang.String, java.lang.Object)
 	 */
-	@Override
 	public <T> boolean set(String _key, T _item)
 			throws CacheException {
 		boolean set = false;
@@ -289,8 +259,10 @@ public class RedisCache extends CacheBase implements DistributedCache {
 
 			if (!m_hasTimespan) {
 				LOGGER.debug(STORING_S_S, _key, val);
+				
+				String hashedKey = keyAsString(_key);
 
-				set = jedis.set(keyAsString(_key), val) == _key;
+				set = jedis.set(hashedKey, val).equals("OK");
 			} else {
 				Date d = getExpiry();
 
@@ -318,7 +290,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	/**
 	 * @see RedisCache#get(String)
 	 */
-	@Override
 	public <T> T get(Cacheable _item)
 			throws CacheException {
 		return get(_item.getCacheKey());
@@ -334,14 +305,14 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	 *             throw it up
 	 * 
 	 */
-	@Override
 	public <T> T get(String _key) throws CacheException {
 		LOGGER.debug(GETTING_S, _key);
 
 		String result = null;
 
 		try {
-			result = jedis.get(_key);
+			result = jedis.get(keyAsString(_key));
+			LOGGER.info(result);
 		} catch (Exception e) {
 			throw new CacheException("Could not get %s", e, _key);
 		}
@@ -354,7 +325,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	/**
 	 * @see RedisCache#delete(String)
 	 */
-	@Override
 	public boolean delete(Cacheable _item) throws CacheException {
 		return delete(_item.getCacheKey());
 	}
@@ -367,13 +337,13 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	 * @throws CacheException
 	 *             if the client throws up an exception
 	 */
-	@Override
 	public boolean delete(String _key) throws CacheException {
 		LOGGER.debug(DELETING_S, _key);
 
 		boolean retVal = true;
 		try {
-			retVal = jedis.del(_key) != null;
+			String hashKey = keyAsString(_key);
+			retVal = jedis.del(hashKey) != null;
 		} catch (Exception e) {
 			throw new CacheException(COULD_NOT_DELETE, e, _key);
 		}
@@ -386,27 +356,22 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		return retVal;
 	}
 
-	@Override
 	public void clear() throws CacheException {
 		new UnsupportedOperationException("clear not supported by Redis.");
 	}
 
-	@Override
 	public void incr(String key) throws CacheException {
 		incr(key, 1);
 	}
 
-	@Override
 	public void decr(String key) throws CacheException {
 		decr(key, 1);
 	}
 
-	@Override
 	public void incr(String key, long delta) throws CacheException {
 		jedis.incrBy(key, delta);
 	}
 
-	@Override
 	public void decr(String key, long delta) throws CacheException {
 		jedis.decrBy(key, delta);
 	}
@@ -421,7 +386,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 	}
 
 	protected String fullKeyAsString(Object key) {
-		return String.format("{}", (key == null ? "" : key.toString()));
+		return String.format("[%s]", (key == null ? "" : key.toString()));
 	}
 
 	/**
@@ -466,7 +431,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		return convertToHex(data);
 	}
 
-	@Override
 	public Future<Boolean> setAsync(final Cacheable _obj) throws CacheException {
 		Callable<Boolean> c = new Callable<Boolean>() {
 
@@ -478,7 +442,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		return asyncExecutor.submit(c);
 	}
 
-	@Override
 	public <T> Future<Boolean> setAsync(final String _key,
 			final T _obj) throws CacheException {
 		Callable<Boolean> c = new Callable<Boolean>() {
@@ -491,7 +454,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		return asyncExecutor.submit(c);
 	}
 
-	@Override
 	public <T> T get(Cacheable _key, Callable<T> ifNotFound)
 			throws CacheException {
 		T t = get(_key);
@@ -504,7 +466,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		return t;
 	}
 
-	@Override
 	public <T> T get(String _key, Callable<T> ifNotFound)
 			throws CacheException {
 
@@ -518,7 +479,6 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		return t;
 	}
 
-	@Override
 	public Future<Boolean> deleteAsync(final String _key) throws CacheException {
 
 		Callable<Boolean> c = new Callable<Boolean>() {
@@ -531,7 +491,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		return asyncExecutor.submit(c);
 	}
 
-	@Override
+//	@Override
 	public Future<Boolean> deleteAsync(final Cacheable _key)
 			throws CacheException {
 		Callable<Boolean> c = new Callable<Boolean>() {

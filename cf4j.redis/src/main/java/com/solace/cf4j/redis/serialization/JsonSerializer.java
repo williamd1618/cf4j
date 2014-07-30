@@ -10,30 +10,35 @@ public abstract class JsonSerializer<T> implements SerializationStrategy<T> {
 	
 	Class<T> clazz;
 	
-	protected static final ObjectMapper MAPPER = new ObjectMapper();
+	protected static final ObjectMapper DEFAULT = new ObjectMapper();
 
 	protected JsonSerializer(Class<T> c) {
 		this.clazz = c;
-		
-		
+	}
+	
+	protected ObjectMapper mapper() {
+		return DEFAULT;
 	}
 	
 	
-	@Override
+//	@Override
 	public String serialize(T obj) throws SerializationException {
 		try {
-			return MAPPER.writer().writeValueAsString(obj);
+			return mapper().writer().writeValueAsString(obj);
 		} catch ( Exception e ) {
 			throw new SerializationException(e);
 		}
 	}
 	
-	@Override
+//	@Override
 	public T deserialize(String val) throws SerializationException {
+		
+		if (null == val)
+			return null;
 		
 		T t = null;
 		try {
-			t = MAPPER.reader(clazz).readValue(val);
+			t = mapper().reader(clazz).readValue(val);
 		} catch (Exception e) {
 			throw new SerializationException(e);
 		}

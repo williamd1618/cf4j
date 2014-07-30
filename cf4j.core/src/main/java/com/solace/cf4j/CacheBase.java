@@ -52,7 +52,7 @@ public abstract class CacheBase implements Cache {
 				&& m_config.getType().getProperties().size() > 0) {
 			for (Map.Entry<String, String> e : m_config.getType()
 					.getProperties().entrySet()) {
-				m_params.put(e.getKey(), e.getValue());
+				params.put(e.getKey(), e.getValue());
 			}
 		}
 

@@ -214,6 +214,11 @@ public class CacheAccessorTests {
 
 		}
 
+		public boolean supportsThreadLocal() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
 	}
 
 }
