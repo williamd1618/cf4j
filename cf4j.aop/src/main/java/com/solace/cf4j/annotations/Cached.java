@@ -66,5 +66,5 @@ public @interface Cached {
 	 */
 	int cacheStackLocation() default NO_STACK_SPECIFIED;
 	
-	CacheOperation operation() default CacheOperation.None;
+	CacheOperation op() default CacheOperation.Get;
 }

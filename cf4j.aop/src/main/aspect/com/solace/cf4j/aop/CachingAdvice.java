@@ -18,8 +18,9 @@ import com.solace.cf4j.*;
 /**
  * The CachingAdvice is weaved into code based upon the pointcut defined.
  * <p>
- * If using an expression language, {@link Cached#el()}=true, then the object reference must
- * be of the form $1...$n representing the parameter passed in on the stack
+ * If using an expression language, {@link Cached#el()}=true, then the object
+ * reference must be of the form $1...$n representing the parameter passed in on
+ * the stack
  * 
  * @author <a href="mailto:daniel.williams@gmail.com">Daniel Williams</a>
  *
@@ -42,17 +43,17 @@ public class CachingAdvice {
 	public Object invoke(final ProceedingJoinPoint pjp, final Cached cached)
 			throws Throwable {
 
-		Object result, value = null;
+		if (cached.op() == CacheOperation.Get)
+			return handleGet(cached, pjp);
+		else if (cached.op() == CacheOperation.Put)
+			return handleSet(cached, pjp);
+		else
+			return handleDelete(cached, pjp);
 
-		Logger logger = LoggerFactory.getLogger(pjp.getClass());
+	}
 
-		Object[] args = pjp.getArgs();
-
+	private Cache accessor(final Cached cached) {
 		Cache accessor = null;
-
-		String key = "";
-		
-		boolean hit = false;
 
 		if (cached.tl())
 			accessor = CacheAccessor.newThreadLocalScopeCache(cached
@@ -61,65 +62,120 @@ public class CachingAdvice {
 			accessor = CacheAccessor.newApplicationScopeCache(cached
 					.cacheName());
 
-		if (cached.alwaysInvokeMethod()) {
-			logger.debug("forcing execution of method ...");
+		return accessor;
+	}
 
-			result = pjp.proceed();
+	private Logger logger(ProceedingJoinPoint pjp) {
+		return LoggerFactory.getLogger(pjp.getThis().getClass());
+	}
 
-			if (cached.cacheStackLocation() != Cached.NO_STACK_SPECIFIED) {
-				logger.debug("pulling object off of stack at position {0}",
-						cached.cacheStackLocation());
-				value = pjp.getArgs()[cached.cacheStackLocation() - 1];
+	/**
+	 * Attempt to set an object in the designated cache asynchronously
+	 * @param logger
+	 * @param c
+	 * @param key
+	 * @param v
+	 */
+	private void set(Logger logger, Cache c, String key, Object v) {
+		boolean couldSet = true;
+		if (!Strings.isNullOrEmpty(key))
+			c.setAsync(key, v);
+		else
+			couldSet = false;
+		
+		if (!couldSet)			
+			logger.error("could not set key: {}", key);
+	}
+
+	/**
+	 * Handles {@link CacheOperation#Get} operations.
+	 * Will first attempt to query resolved cache, if hit then will return; if not hit, will invoke and set asynchronously
+	 * @param cached
+	 * @param pjp
+	 * @return
+	 * @throws Throwable
+	 */
+	private Object handleGet(final Cached cached, final ProceedingJoinPoint pjp)
+			throws Throwable {
+		Logger logger = logger(pjp);
+
+		Cache cache = accessor(cached);
+
+		Object value = null;
+		String key = null;
+		try {
+			key = getKey(cached, pjp);
+
+			if (key != null) {
+				logger.debug("Attempting key: {}", key);
+				value = cache.get(key);
 			}
-		} else {
-			logger.debug("execution of method was not forced.");
-			try {
-				key = getKey(cached, pjp);
+		} catch (Exception e) {
+		}
 
-				if (key != null) {
-					logger.debug("Attempting key: {0}", key);
-					value = accessor.get(key);
+		if (null == value) {
+			value = pjp.proceed();
 
-					// if (value != null && attrib.CacheReadStrategy != null)
-					// value = HandleCacheReadStrategy(attrib, key, value,
-					// cache);
-				}
-			} catch (Exception e) {
-			}
-			
-			
-            // if not found execute
-            if (null == value)
-            {
-                logger.debug("Cache miss for key: {0}", key);
-
-                value = invokeMethod(pjp, cached);
-
-                key = getKey(cached, pjp);
-            } else {
-                hit = true;
-                logger.debug("Cache hit for key: {0}", key);
-            }
-            
-            key = getKey(cached, pjp);
-
-            // certain operations we will want to delete if the operation was successful
-            if (!hit && cached.operation() != CacheOperation.Delete)
-            {
-                if (value != null)
-                {
-                	accessor.set(key, value);
-                } else {
-                    value = invokeMethod(pjp, cached);
-                }
-            }
-            else if (cached.operation() == CacheOperation.Delete) {
-                logger.debug("Deleting key: {0}", key);
-                accessor.delete(key);
-            }
+			set(logger, cache, key, value);				
 		}
 
 		return value;
+	}
+
+	
+	/**
+	 * Will handle {@link CacheOperation#Put} put operations.
+	 * If value to be put is passed in on stack, {@link Cached#cacheStackLocation()}, will attempt to set on resolved {@link Cache} asynchronously and then invoke method
+	 * assuming additional business logic.
+	 * 
+	 * If {@link Cached#cacheStackLocation()} not set, or set to {@value Cached#NO_STACK_SPECIFIED}, will invoke method and 
+	 * asynchronously set.
+	 * @param cached
+	 * @param pjp
+	 * @return
+	 * @throws Throwable
+	 */
+	private Object handleSet(final Cached cached, final ProceedingJoinPoint pjp)
+			throws Throwable {
+		Cache c = accessor(cached);
+		Logger logger = logger(pjp);
+		Object result = null;
+		String key = getKey(cached, pjp);
+		if (cached.cacheStackLocation() != Cached.NO_STACK_SPECIFIED) {
+			logger.info("Setting pre-defined object passed on stack.");
+
+			set(logger, c, key, pjp.getArgs()[cached.cacheStackLocation() - 1]);			
+			
+			result = pjp.proceed();
+		} else {
+			result = pjp.proceed();
+			
+			if (null == result)
+				logger.error(
+						"method did not return a result to replace for key {}",
+						key);
+			else
+				set(logger, c, key, result);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Handle {@link CacheOperation#Delete} operations
+	 * Will invoke an asynchronous delete on the resolved {@link Cache} first thing.
+	 * Will then invoke {@link #handleSet(Cached, ProceedingJoinPoint)} which will invoke properly
+	 * @param cached
+	 * @param pjp
+	 * @return
+	 * @throws Throwable
+	 */
+	private Object handleDelete(final Cached cached,
+			final ProceedingJoinPoint pjp) throws Throwable {
+		Cache c = accessor(cached);
+		String key = getKey(cached, pjp);
+		c.deleteAsync(key);
+		return handleSet(cached, pjp);
 	}
 
 	private String getKey(final Cached cached, final ProceedingJoinPoint pjp) {
@@ -133,19 +189,20 @@ public class CachingAdvice {
 
 		// populate the context
 		JexlContext context = new MapContext();
-		for(int i=1; i<=pjp.getArgs().length; i++)
-			context.set("$" + i, pjp.getArgs()[i]);
-		
+		for (int i = 1; i <= pjp.getArgs().length; i++)
+			context.set("$" + i, pjp.getArgs()[i - 1]);
+
 		return e.evaluate(context).toString();
 	}
-	
-	private Object invokeMethod(final ProceedingJoinPoint pjp, final Cached cached) throws Throwable {
+
+	private Object invokeMethod(final ProceedingJoinPoint pjp,
+			final Cached cached) throws Throwable {
 		Object value = pjp.proceed();
-		
+
 		if (cached.cacheStackLocation() != Cached.NO_STACK_SPECIFIED) {
-			value = pjp.getArgs()[cached.cacheStackLocation()-1];
+			value = pjp.getArgs()[cached.cacheStackLocation() - 1];
 		}
-		
-        return value;
+
+		return value;
 	}
 }

@@ -133,56 +133,72 @@ public abstract class CacheAccessor implements Cache {
 	public Cache getCache() {
 		return m_cache;
 	}
+	
+	private void log(String op, String key) {
+		LOGGER.debug("{} for key: {}", op, key);
+	}
 
 	public <T> T get(Cacheable _key) throws CacheException {
+		log("GET", _key.getCacheKey());
 		return m_cache.get(_key);
 	}
 
 	public <T> T get(Cacheable _key, Callable<T> ifNotFound)
 			throws CacheException {
+		log("GET", _key.getCacheKey());
 		return m_cache.get(_key, ifNotFound);
 	}
 
 	public <T> T get(String _key) throws CacheException {
+		log("GET", _key);
 		return m_cache.get(_key);
 	}
 
 	public <T> T get(String _key, Callable<T> ifNotFound)
 			throws CacheException {
+		log("GET", _key);
 		return m_cache.get(_key, ifNotFound);
 	}
 
 	public boolean set(Cacheable _obj) throws CacheException {
+		log("SET", _obj.getCacheKey());
 		return m_cache.set(_obj);
 	}
 
 	public <T> boolean set(String _key, T _obj)
 			throws CacheException {
+		log("SET", _key);
 		return m_cache.set(_key, _obj);
 	}
 
 	public Future<Boolean> setAsync(Cacheable _obj) throws CacheException {
+		log("SETASYNC", _obj.getCacheKey());
 		return m_cache.setAsync(_obj);
 	}
 
 	public <T> Future<Boolean> setAsync(String _key, T _obj)
 			throws CacheException {
+		log("SETASYNC", _key);
 		return m_cache.setAsync(_key, _obj);
 	}
 
 	public boolean delete(Cacheable _key) throws CacheException {
+		log("DELETE", _key.getCacheKey());
 		return m_cache.delete(_key);
 	}
 
 	public boolean delete(String _key) throws CacheException {
+		log("DELETE", _key);
 		return m_cache.delete(_key);
 	}
 
 	public Future<Boolean> deleteAsync(Cacheable _key) throws CacheException {
+		log("DELETEASYNC", _key.getCacheKey());
 		return m_cache.deleteAsync(_key);
 	}
 
 	public Future<Boolean> deleteAsync(String _key) throws CacheException {
+		log("DELETEASYNC", _key);
 		return m_cache.deleteAsync(_key);
 	}
 
