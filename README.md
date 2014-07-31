@@ -73,6 +73,35 @@ _properties_
 | connectionTimeout | timeout | long |	
 | cacheTimespan | timespan to set by default in secs | int (defaults to forever) |	
 
+_L1L2Cache_
+
+The `L1L2Cache` provides a way to configure multiple `Cache` implementations under the same logical name.
+
+** The caches must be configured in the order or highest priority to lowest priority (e.g. GuavaCache, RedisCache).
+All operations will perform GETs and SETs in that order, and typically asynchronously during synchronization.
+The properties for all caches must be configured in the same collection as follows:
+
+```
+{
+	"cache":[
+    	{
+        	"type": {
+            	"properties": {
+					"cache.count" : "2",
+					"cache[1].type" : "com.solace.cf4j.guava.GuavaCache",
+					"cache[2].type" : "com.solace.cf4j.redis.RedisCache",
+					"guava.maximumSize" : "1000",
+					"redis.serverCount" : "1",
+					"redis.server[0].host" : "localhost"
+					"redis.serializationStrategy" : "com.somepackage.UserSerilizationStrategy"
+                },
+                "value":"com.solace.cf4j.L1L2Cache"
+            },
+            "name":"UserData"
+        }
+    ]
+}
+```
 
 __AOP__
 
