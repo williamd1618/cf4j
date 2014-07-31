@@ -10,6 +10,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>cf4j.redis</artifactId>
 	<packaging>jar</packaging>
+	<description>Redis implementation leveraging redis.clients for cf4j - currently only supports 
+	a single redis host due to a limitation with mock-jedis</description>
+
 
 	<properties>
 		<redis.version>2.4.2</redis.version>

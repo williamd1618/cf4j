@@ -79,15 +79,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>${compiler.version}</source>
-					<target>${compiler.version}</target>
-				</configuration>
-			</plugin>
-
 		</plugins>
 	</build>
 </project>

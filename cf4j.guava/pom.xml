@@ -10,6 +10,8 @@
 
 	<artifactId>cf4j.guava</artifactId>
 
+	<description>A simplified Guava cache implementation adapted by cf4j</description>
+
 	<packaging>jar</packaging>
 
 	<name>cf4j.guava</name>

@@ -38,7 +38,7 @@ public class RedisCacheTests {
 		t.setProperties(new HashMap<String, String>() {
 			{
 				put("test", Boolean.TRUE.toString());
-				put("serializationStrategy",
+				put(Keys.SERIALIZATION_STRATEGY,
 						Data.DataSerializationStrategy.class.getName());
 			}
 		});

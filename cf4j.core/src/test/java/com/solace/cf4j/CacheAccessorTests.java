@@ -36,12 +36,12 @@ public class CacheAccessorTests {
 		config.setType(type);
 
 		c.setCaches(Lists.newArrayList(config));
+		CacheAccessor.addConfiguration(config);
+
 	}
 
 	@Test
 	public void test_load_of_app_scope_accessor() {
-		CacheAccessor.addConfiguration(config);
-
 		Cache c = CacheAccessor.newApplicationScopeCache("test");
 
 		CacheAccessor a = (CacheAccessor) c;
@@ -55,8 +55,6 @@ public class CacheAccessorTests {
 	public void test_app_scope_get_hit() {
 		MyData o = new MyData();
 
-		CacheAccessor.addConfiguration(config);
-
 		Cache cache = CacheAccessor.newApplicationScopeCache("test");
 
 		assertTrue(cache.set("test", o));
@@ -69,8 +67,6 @@ public class CacheAccessorTests {
 	 */
 	@Test
 	public void test_load_of_tl_scope_accessor() {
-		CacheAccessor.addConfiguration(config);
-		
 		Callable<MyData> c1 = new Callable<MyData>() {
 			public MyData call() throws Exception {
 				Cache c = CacheAccessor.newThreadLocalScopeCache("test");
@@ -216,9 +212,7 @@ public class CacheAccessorTests {
 
 		public boolean supportsThreadLocal() {
 			// TODO Auto-generated method stub
-			return false;
+			return true;
 		}
-
 	}
-
 }

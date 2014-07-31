@@ -75,3 +75,45 @@ _properties_
 
 
 __AOP__
+
+artifact: cf4j.aop
+
+Provides an AOP declarative strategy for cache operations against standard methods.  The pointcut definition,
+as can be seen in the code, supports calls to all methods decorations with @Cached.
+
+_examples_
+
+The AOP strategy requires metadata to be runtime retained.  This is because depending on your chosen weaving strategy 
+(e.g. runtime weaving) this may be needed.  In the case of compile-time weaving this isn't needed and creates loadable
+Java classes.
+
+All `key` values passed in can be evaluated as an expression language if the `el` attribute is set to true.
+
+_GET_
+
+Will invoke a GET operation against the configuration `test` cache using an expression language that concatenates the first and second stack parameters.
+```
+@Cached(cacheName = "test", key = "$1 + $2", el = true, op = CacheOperation.Get)
+public Person getPersonWithEl(String firstName, String lastName) {
+	LOGGER.info("cache miss");
+	return new Person(firstName, lastName);
+}
+```
+
+_PUT_
+
+Will invoke a PUT/SET operation against the configured cache.  This operation will be performed asynchronously and will disregard the Future state.
+
+In the following example the `Person` instance passed onto the stack will be immediately, and asynchronously, cached using the concatenated
+values of the person's first and last names.  If the resultant of the method is desired to be cached then simply do not specific a `cacheStackLocation`.
+
+```
+@Cached(cacheName = "test", key = "$1.firstName + $1.lastName", el = true, op = CacheOperation.Put, cacheStackLocation = 1)
+public void setPerson(Person p) {
+	LOGGER.debug("now we're doing something else.");
+}
+```
+
+_DELETE_
+
+Will immediately, asynchronously issue a DELETE operation against the resolved cache and then proceed with the same fundamental flow as PUT.

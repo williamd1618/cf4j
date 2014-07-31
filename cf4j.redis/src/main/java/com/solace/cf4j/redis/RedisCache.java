@@ -200,19 +200,7 @@ public class RedisCache extends CacheBase implements DistributedCache {
 		return new HostAndPort(host, port);
 	}
 
-	private int loadWeight(int i) {
-		String tmp = null;
-
-		// building up our server weights if provided
-		// defaults to 5
-		if ((tmp = getParameters().get(String.format(SERVER_WEIGHT, i))) != null
-				&& tmp != "")
-			return Integer.parseInt(tmp);
-		else
-			return DEFAULT_SERVER_WEIGHT.intValue();
-	}
-
-	/**
+		/**
 	 * Will add a number of seconds to the current datetime to signal the
 	 * memcached server when to expire content
 	 * 
