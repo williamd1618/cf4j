@@ -51,10 +51,10 @@ _properties_
 
 | property  | description  | type |
 | :------------ | :---------------| :-----|
-| maximumSize | max number of cached elements | long |
-| expireAfterWrite | expiration time |   long |
-| expireAfterWriteInterval | expiration interval | http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/TimeUnit.html |
-| removalListener | class to invoke when elements removed | string |
+| guava.maximumSize | max number of cached elements | long |
+| guava.expireAfterWrite | expiration time |   long |
+| guava.expireAfterWriteInterval | expiration interval | http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/TimeUnit.html |
+| guava.removalListener | class to invoke when elements removed | string |
 
 
 _Redis_
@@ -65,13 +65,13 @@ _properties_
 
 | property  | description  | type |
 | :------------ |:---------------| :-----|
-| serializationStrategy | serialization strategy to use | string |
-| serverCount | number of servers in cluster (defines key'ing) | string |
-| server[n].host | host of nth server | string |
-| server[n].port | port of nth server | int (defaults to 6379) |
-| server[n].weight | weight of nth server | int |	
-| connectionTimeout | timeout | long |	
-| cacheTimespan | timespan to set by default in secs | int (defaults to forever) |	
+| redis.serializationStrategy | serialization strategy to use | string |
+| redis.serverCount | number of servers in cluster (defines key'ing) | string |
+| redis.server[n].host | host of nth server | string |
+| redis.server[n].port | port of nth server | int (defaults to 6379) |
+| redis.server[n].weight | weight of nth server | int |	
+| redis.connectionTimeout | timeout | long |	
+| redis.cacheTimespan | timespan to set by default in secs | int (defaults to forever) |	
 
 _L1L2Cache_
 
