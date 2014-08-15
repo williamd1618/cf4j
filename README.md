@@ -5,6 +5,10 @@ Codebase is currently authored in Java 7, exposes its own runtime exceptions,
 as well as a tightly defined interfaced for a _Cache_. 
 
 __Configuration__
+
+Configuration can be done manually/expressively via the `CacheAccessor#addConfiguration` method to be built up statically in code,
+or it can be done in a more resilient fashion by configuring via config file.
+
 Currently done in json, there will be support yaml support in the near future.
 
 ```
